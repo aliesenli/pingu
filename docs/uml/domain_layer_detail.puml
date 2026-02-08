@@ -1,0 +1,240 @@
+@startuml
+
+' ──────────────────────────────────────
+' CSS STYLING
+' ──────────────────────────────────────
+<style>
+  element {
+    FontName: "Segoe UI"
+    FontSize: 12
+  }
+
+  root {
+    BackgroundColor: #F8FAFC
+    FontColor: #1E293B
+  }
+
+  classDiagram {
+    class {
+      BackgroundColor: #EFF6FF
+      LineColor: #2563EB
+      LineThickness: 2
+      FontColor: #1E3A5F
+      FontStyle: bold
+      FontSize: 13
+      RoundCorner: 10
+      Shadowing: 4
+    }
+
+    .valueobject {
+      BackgroundColor: #DCFCE7
+      LineColor: #16A34A
+      FontColor: #14532D
+      RoundCorner: 12
+    }
+
+    .enumeration {
+      BackgroundColor: #FFF7ED
+      LineColor: #EA580C
+      FontColor: #7C2D12
+      RoundCorner: 8
+    }
+
+    arrow {
+      LineColor: #64748B
+      LineThickness: 1.5
+      FontColor: #475569
+      FontSize: 11
+    }
+  }
+
+  package {
+    BackgroundColor: #D7D7D7
+    LineColor: #000
+    LineThickness: 1.5
+    FontColor: #334155
+    FontStyle: bold
+    RoundCorner: 8
+  }
+
+  legend {
+    BackgroundColor: #F1F5F9
+    LineColor: #CBD5E1
+    FontSize: 11
+    RoundCorner: 6
+  }
+
+  title {
+    FontSize: 22
+    FontStyle: bold
+    FontColor: #0F172A
+  }
+
+  footer {
+    FontSize: 10
+    FontColor: #94A3B8
+  }
+</style>
+
+' ──────────────────────────────────────
+' LAYOUT OPTIMIZATIONS
+' ──────────────────────────────────────
+
+' Use polyline instead of ortho — ortho causes more overlapping
+' and pushes labels far from arrows on complex diagrams
+skinparam linetype ortho
+
+' Increase spacing between nodes to give arrows room
+skinparam nodesep 150
+skinparam ranksep 250
+
+' ──────────────────────────────────────
+' TITLE
+' ──────────────────────────────────────
+title Currency Exchange System\nDomain Model — Class Diagram
+
+' ──────────────────────────────────────
+' ENUMERATIONS
+' ──────────────────────────────────────
+package "«enumerations»" {
+  enum Role <<enumeration>> {
+    ADMIN
+    CONSULTANT
+  }
+
+  enum TransactionState <<enumeration>> {
+    NOT_STARTED
+    PENDING
+    SUCCESSFUL
+    FAILURE
+  }
+
+  enum Currency <<enumeration>> {
+    USD
+    EUR
+    JPY
+    GBP
+    AUD
+    CAD
+    CHF
+    CNH
+    HKD
+    NZD
+  }
+}
+
+' ──────────────────────────────────────
+' VALUE OBJECTS
+' ──────────────────────────────────────
+package "«value objects»" {
+  class Name <<valueobject>> {
+    -- properties --
+    - String value
+    -- methods --
+    + validate(String value) : boolean
+  }
+
+  class Password <<valueobject>> {
+    -- properties --
+    - String value
+    -- methods --
+    + validate() : boolean
+  }
+
+  class EmailAddress <<valueobject>> {
+    -- properties --
+    - String value
+    -- methods --
+    + validate() : boolean
+  }
+
+  class Amount <<valueobject>> {
+    -- properties --
+    - Long value
+    -- methods --
+    + validate(Long value) : boolean
+  }
+}
+
+' ──────────────────────────────────────
+' ENTITIES
+' ──────────────────────────────────────
+package "«entities»" {
+  entity User <<entity>> {
+    -- properties --
+    Instant createdAt
+    -- methods --
+    + User()
+  }
+
+  entity Client <<entity>> {
+    -- properties --
+    Instant clientSince
+    -- methods --
+    + Client()
+  }
+
+  entity Transaction <<entity>> {
+    -- properties --
+    Instant timestamp
+    -- methods --
+    + Transaction()
+  }
+}
+
+' ──────────────────────────────────────
+' HIDDEN LAYOUT HELPERS
+' ──────────────────────────────────────
+' These invisible arrows influence element placement
+' without appearing in the diagram
+
+' Keep entities in a logical row
+User -[hidden]right- Client
+Client -[hidden]right- Transaction
+
+' Keep value objects grouped below entities
+User -[hidden]down- Name
+Transaction -[hidden]down- Amount
+
+' Keep enums on the right side
+Transaction -[hidden]right- Currency
+
+' ──────────────────────────────────────
+' RELATIONSHIPS
+' ──────────────────────────────────────
+
+' User relationships
+User "1" --> "1" Role : has
+User "1" *-down- "1" Name : firstname
+User "1" *-down- "1" Name : lastname
+User "1" *-down- "1" Password : has
+User "1" *-down- "1" EmailAddress : has
+User "1" -right- "many" Client : manages >
+
+' Client relationships
+Client "1" *-down- "1" Name : firstname
+Client "1" *-down- "1" Name : lastname
+
+' Transaction relationships
+Transaction "many" -left- "1" User : madeBy >
+Transaction "many" -left- "1" Client : for >
+Transaction "1" *-down- "1" Amount : sourceAmount
+Transaction "1" *-down- "1" Amount : targetAmount
+Transaction "1" -right-> "1" Currency : sourceCurrency
+Transaction "1" -right-> "1" Currency : targetCurrency
+Transaction "1" -right-> "1" TransactionState : has
+
+' ──────────────────────────────────────
+' LEGEND
+' ──────────────────────────────────────
+legend bottom right
+  |<#EFF6FF>    | Entity |
+  |<#DCFCE7>    | Value Object |
+  |<#FFF7ED>    | Enumeration |
+  | **──▶** | Dependency |
+  | **◆──** | Composition |
+endlegend
+
+footer Generated with PlantUML • Domain-Driven Design
+
+@enduml

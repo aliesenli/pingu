@@ -1,0 +1,151 @@
+@startuml
+
+' ──────────────────────────────────────
+' CSS STYLING
+' ──────────────────────────────────────
+<style>
+  element {
+    FontName: "Segoe UI"
+    FontSize: 13
+  }
+
+  root {
+    BackgroundColor: #F8FAFC
+    FontColor: #1E293B
+  }
+
+  classDiagram {
+    class {
+      BackgroundColor: #EFF6FF
+      LineColor: #2563EB
+      LineThickness: 2
+      FontColor: #1E3A5F
+      FontStyle: bold
+      FontSize: 14
+      RoundCorner: 10
+      Shadowing: 4
+    }
+
+    .valueobject {
+      BackgroundColor: #DCFCE7
+      LineColor: #16A34A
+      FontColor: #14532D
+      RoundCorner: 12
+    }
+
+    .enumeration {
+      BackgroundColor: #FFF7ED
+      LineColor: #EA580C
+      FontColor: #7C2D12
+      RoundCorner: 8
+    }
+
+    arrow {
+      LineColor: #64748B
+      LineThickness: 1.5
+      FontColor: #475569
+      FontSize: 11
+    }
+  }
+
+  legend {
+    BackgroundColor: #F1F5F9
+    LineColor: #CBD5E1
+    FontSize: 11
+    RoundCorner: 6
+  }
+
+  title {
+    FontSize: 22
+    FontStyle: bold
+    FontColor: #0F172A
+  }
+
+  footer {
+    FontSize: 10
+    FontColor: #94A3B8
+  }
+</style>
+
+' ──────────────────────────────────────
+' LAYOUT
+' ──────────────────────────────────────
+skinparam linetype ortho
+skinparam nodesep 200
+skinparam ranksep 150
+
+' ──────────────────────────────────────
+' TITLE
+' ──────────────────────────────────────
+title Currency Exchange System\nFachklassenmodell (Übersicht)
+
+' ──────────────────────────────────────
+' ENUMERATIONS
+' ──────────────────────────────────────
+enum Role <<enumeration>>
+enum TransactionState <<enumeration>>
+enum Currency <<enumeration>>
+
+' ──────────────────────────────────────
+' VALUE OBJECTS
+' ──────────────────────────────────────
+class Name <<valueobject>>
+class Password <<valueobject>>
+class EmailAddress <<valueobject>>
+class Amount <<valueobject>>
+
+' ──────────────────────────────────────
+' ENTITIES
+' ──────────────────────────────────────
+entity User <<entity>>
+entity Client <<entity>>
+entity Transaction <<entity>>
+
+' ──────────────────────────────────────
+' HIDDEN LAYOUT HELPERS
+' ──────────────────────────────────────
+User -[hidden]right- Client
+Client -[hidden]right- Transaction
+User -[hidden]down- Name
+Transaction -[hidden]down- Amount
+Transaction -[hidden]right- Currency
+
+' ──────────────────────────────────────
+' RELATIONSHIPS
+' ──────────────────────────────────────
+
+' User
+User "1" --> "1" Role
+User "1" *-right- "1" Name : firstname
+User "1" *-down- "1" Name : lastname
+User "1" *-down- "1" Password
+User "1" *-down- "1" EmailAddress
+User "1" -right- "many" Client : manages >
+
+' Client
+Client "1" *-down- "1" Name : firstname
+Client "1" *-down- "1" Name : lastname
+
+' Transaction
+Transaction "many" -left- "1" User : madeBy >
+Transaction "many" -left-> "1" Client : for
+Transaction "1" *-down- "1" Amount : sourceAmount
+Transaction "1" *-down- "1" Amount : targetAmount
+Transaction "1" -right-> "1" Currency : sourceCurrency
+Transaction "1" -right-> "1" Currency : targetCurrency
+Transaction "1" -right-> "1" TransactionState
+
+' ──────────────────────────────────────
+' LEGEND
+' ──────────────────────────────────────
+legend bottom right
+  |<#EFF6FF>    | Entity |
+  |<#DCFCE7>    | Value Object |
+  |<#FFF7ED>    | Enumeration |
+  | **──▶** | Dependency |
+  | **◆──** | Composition |
+endlegend
+
+footer Generated with PlantUML • Fachklassenmodell (abstrakt)
+
+@enduml

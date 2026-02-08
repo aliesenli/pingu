@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor Consultant
+actor Admin
+
+rectangle "Währungsumrechnungssystem\n(Java / JavaFX Desktop-Applikation)" as System
+
+rectangle "Lokales Dateisystem" as FileSystem
+rectangle "Datenbank" as Database
+
+Consultant --> System : nutzt
+Admin --> System : administriert
+
+System --> FileSystem : liest Wechselkurs-\nJSON-Dateien
+System --> Database : speichert und liest\nTransaktionen, Benutzer,\nWechselkurse
+
+@enduml

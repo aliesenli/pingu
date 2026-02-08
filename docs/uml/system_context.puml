@@ -1,0 +1,7 @@
+@startuml
+
+"<<System>> \n Pingu Finance" as (use)
+:Admin: --> (use)
+:Consultant: --> (use)
+
+@enduml

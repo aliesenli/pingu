@@ -1,0 +1,22 @@
+@startuml
+' Akteure audderhalb der Fokusgruppen
+actor "PO" as PO
+actor "Law" as Law
+actor "Client" as Client
+actor "Devs" as Devs
+
+' Äudderer Bereich (rote Linie)
+rectangle "Projekt-Scope" as Scope #line:red;line.dotted {
+    actor "Admin" as Admin
+    actor "Consultant" as Consultant
+
+    ' Innerer Bereich (grüne Linie)
+    rectangle "Core-System" as System #line:green {
+        node "IAM" as IAM
+        node "User-Management" as User-Management
+        node "Converter" as Converter
+        node "Data-Upload" as DataUpload
+        node "Transaktion" as Transaktion
+    }
+}
+@enduml
