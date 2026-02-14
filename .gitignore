@@ -16,6 +16,13 @@
 *_LOCAL_*.txt
 *_REMOTE_*.txt
 
+### IDE ###
+# IntelliJ IDEA
+.idea/
+
+# Visual Studio Code
+.vscode/
+
 ### Java ###
 # Compiled class file
 *.class

@@ -49,7 +49,6 @@ The application allows consultants to manage clients and perform currency exchan
 | Maven | Build & dependency management |
 | JavaFX 21 | Desktop UI framework |
 | JUnit 5.11 | Testing |
-| PostgreSQL | Database |
 | PlantUML | UML documentation |
 
 ---
@@ -95,18 +94,6 @@ mvn javafx:run -pl <artifactId>-presentation
 2. Log in with your credentials
 3. **Admin:** Manage consultants and clients
 4. **Consultant:** Create and manage currency exchange transactions
--->
-
-<!-- TODO
-### Default Credentials
-
-| Role | Username | Password |
-|---|---|---|
-| Admin | admin@example.com | admin123 |
-| Consultant | consultant@example.com | cons123 |
-
----
-
 -->
 
 ## Project Structure
@@ -173,7 +160,6 @@ The application follows a **layered architecture**, enforced at build-time throu
 | Module | Layer | Responsibility | Depends on |
 |---|---|---|---|
 | `<artifactId>-domain` | **Domain** | Entities, value objects, enums | — |
-| `<artifactId>-application` | **Application** | Business logic and orchestration | domain |
 | `<artifactId>-infrastructure` | **Infrastructure** | Data persistence and external services | application |
 | `<artifactId>-presentation` | **Presentation** | JavaFX UI (FXML + Controllers) | application |
 
@@ -194,21 +180,3 @@ UML diagrams are located in `docs/uml/` and can be rendered with any PlantUML-co
 | Domain Layer | Detailed class diagram | [`domain_layer_detail.puml`](docs/uml/domain_layer_detail.puml) |
 
 ---
-
-## Team
-
-| Name | Role | GitHub |
-|---|---|---|
-| Nick Sohl | Software Enigneer | [@nick-sohl](https://github.com/nick-sohl) |
-| Ali Riza | Frontend Developer | [@username](https://github.com/username) |
-| Stefan Furrer | Product Owner | - |
-
----
-
-## License
-
-<!-- If license: -->
-<!-- This project is licensed under the [MIT License](LICENSE). -->
-
-<!-- If no license: -->
-This project was created for educational purposes at TEKO Zurich.
