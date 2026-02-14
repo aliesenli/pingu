@@ -1,0 +1,58 @@
+[ {
+  "id" : "rate-version-001",
+  "versionName" : "2026-02-13 Daily Rates",
+  "baseCurrency" : "CHF",
+  "rates" : {
+    "AUD" : 1.75,
+    "CHF" : 1.0,
+    "JPY" : 165.5,
+    "EUR" : 1.05,
+    "GBP" : 0.85,
+    "USD" : 1.15,
+    "CAD" : 1.55,
+    "SEK" : 12.25,
+    "INR" : 95.5,
+    "CNY" : 8.25
+  },
+  "uploadedAt" : "2026-02-13T00:00",
+  "uploadedBy" : "admin",
+  "active" : true
+}, {
+  "id" : "rate-version-002",
+  "versionName" : "2026-02-12 Daily Rates",
+  "baseCurrency" : "CHF",
+  "rates" : {
+    "AUD" : 1.74,
+    "CHF" : 1.0,
+    "JPY" : 164.8,
+    "EUR" : 1.04,
+    "GBP" : 0.84,
+    "USD" : 1.14,
+    "CAD" : 1.54,
+    "SEK" : 12.2,
+    "INR" : 95.0,
+    "CNY" : 8.2
+  },
+  "uploadedAt" : "2026-02-12T00:00",
+  "uploadedBy" : "admin",
+  "active" : false
+}, {
+  "id" : "50ce7a96-9eb8-4ffa-9445-7cce5ae0b8e8",
+  "versionName" : "2026-02-13 Daily Rates",
+  "baseCurrency" : "CHF",
+  "rates" : {
+    "AUD" : 9.74,
+    "CHF" : 1.0,
+    "JPY" : 964.8,
+    "EUR" : 9.04,
+    "GBP" : 9.84,
+    "USD" : 9.14,
+    "CAD" : 9.54,
+    "SEK" : 9.2,
+    "INR" : 995.0,
+    "CNY" : 9.2
+  },
+  "uploadedAt" : "2026-02-13T15:27:07.090669",
+  "uploadedBy" : "admin",
+  "active" : false
+} ]

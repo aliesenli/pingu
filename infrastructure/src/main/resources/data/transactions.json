@@ -1,0 +1,190 @@
+[ {
+  "id" : "txn-001",
+  "consultantId" : "user-002",
+  "customerId" : "customer-001",
+  "sourceAmount" : {
+    "amount" : "1000.00",
+    "currency" : "CHF"
+  },
+  "targetAmount" : {
+    "amount" : "1050.00",
+    "currency" : "EUR"
+  },
+  "exchangeRate" : 1.05,
+  "exchangeRateVersionId" : "rate-version-001",
+  "executionDate" : "2026-02-10T10:30",
+  "createdAt" : "2026-02-10T10:25",
+  "createdBy" : "consultant1",
+  "status" : "COMPLETED",
+  "revertReason" : null,
+  "revertedAt" : null,
+  "revertedBy" : null
+}, {
+  "id" : "txn-002",
+  "consultantId" : "user-002",
+  "customerId" : "customer-002",
+  "sourceAmount" : {
+    "amount" : "5000.00",
+    "currency" : "USD"
+  },
+  "targetAmount" : {
+    "amount" : "4347.83",
+    "currency" : "CHF"
+  },
+  "exchangeRate" : 0.86956522,
+  "exchangeRateVersionId" : "rate-version-001",
+  "executionDate" : "2026-02-11T14:15",
+  "createdAt" : "2026-02-11T14:10",
+  "createdBy" : "consultant1",
+  "status" : "EXECUTED",
+  "revertReason" : null,
+  "revertedAt" : null,
+  "revertedBy" : null
+}, {
+  "id" : "txn-003",
+  "consultantId" : "user-003",
+  "customerId" : "customer-003",
+  "sourceAmount" : {
+    "amount" : "2000.00",
+    "currency" : "EUR"
+  },
+  "targetAmount" : {
+    "amount" : "1904.76",
+    "currency" : "CHF"
+  },
+  "exchangeRate" : 0.95238095,
+  "exchangeRateVersionId" : "rate-version-002",
+  "executionDate" : "2026-02-12T09:45",
+  "createdAt" : "2026-02-12T09:40",
+  "createdBy" : "consultant2",
+  "status" : "COMPLETED",
+  "revertReason" : null,
+  "revertedAt" : null,
+  "revertedBy" : null
+}, {
+  "id" : "txn-004",
+  "consultantId" : "user-002",
+  "customerId" : "customer-001",
+  "sourceAmount" : {
+    "amount" : "10000.00",
+    "currency" : "JPY"
+  },
+  "targetAmount" : {
+    "amount" : "60.42",
+    "currency" : "CHF"
+  },
+  "exchangeRate" : 0.00604217,
+  "exchangeRateVersionId" : "rate-version-001",
+  "executionDate" : "2026-02-13T11:20",
+  "createdAt" : "2026-02-13T11:15",
+  "createdBy" : "consultant1",
+  "status" : "NOT_STARTED",
+  "revertReason" : null,
+  "revertedAt" : null,
+  "revertedBy" : null
+}, {
+  "id" : "05cb83a2-dd67-4897-9407-5bea33a90462",
+  "consultantId" : "user-002",
+  "customerId" : "123",
+  "sourceAmount" : {
+    "amount" : "300.00",
+    "currency" : "CHF"
+  },
+  "targetAmount" : {
+    "amount" : "315.00",
+    "currency" : "EUR"
+  },
+  "exchangeRate" : 1.05,
+  "exchangeRateVersionId" : "rate-version-001",
+  "executionDate" : "2026-02-13T14:25:25.987437",
+  "createdAt" : "2026-02-13T14:25:25.989597",
+  "createdBy" : "consultant1",
+  "status" : "NOT_STARTED",
+  "revertReason" : null,
+  "revertedAt" : null,
+  "revertedBy" : null
+}, {
+  "id" : "96ea0ac7-aa13-4cb4-9664-21ab192a5e54",
+  "consultantId" : "user-002",
+  "customerId" : "321",
+  "sourceAmount" : {
+    "amount" : "444.00",
+    "currency" : "CHF"
+  },
+  "targetAmount" : {
+    "amount" : "466.20",
+    "currency" : "EUR"
+  },
+  "exchangeRate" : 1.05,
+  "exchangeRateVersionId" : "rate-version-001",
+  "executionDate" : "2026-02-13T14:38:38.544329",
+  "createdAt" : "2026-02-13T14:38:38.547686",
+  "createdBy" : "consultant1",
+  "status" : "NOT_STARTED",
+  "revertReason" : null,
+  "revertedAt" : null,
+  "revertedBy" : null
+}, {
+  "id" : "txn-006",
+  "consultantId" : "user-002",
+  "customerId" : "customer-002",
+  "sourceAmount" : {
+    "amount" : "3000.00",
+    "currency" : "CHF"
+  },
+  "targetAmount" : {
+    "amount" : "3450.00",
+    "currency" : "USD"
+  },
+  "exchangeRate" : 1.15,
+  "exchangeRateVersionId" : "rate-version-001",
+  "executionDate" : "2026-02-08T13:30",
+  "createdAt" : "2026-02-08T13:25",
+  "createdBy" : "consultant1",
+  "status" : "REVERTED",
+  "revertReason" : null,
+  "revertedAt" : null,
+  "revertedBy" : null
+}, {
+  "id" : "txn-005",
+  "consultantId" : "user-003",
+  "customerId" : "customer-004",
+  "sourceAmount" : {
+    "amount" : "800.00",
+    "currency" : "GBP"
+  },
+  "targetAmount" : {
+    "amount" : "941.18",
+    "currency" : "CHF"
+  },
+  "exchangeRate" : 1.17647059,
+  "exchangeRateVersionId" : "rate-version-001",
+  "executionDate" : "2026-02-09T16:00",
+  "createdAt" : "2026-02-09T15:55",
+  "createdBy" : "consultant2",
+  "status" : "REVERTED",
+  "revertReason" : null,
+  "revertedAt" : null,
+  "revertedBy" : null
+}, {
+  "id" : "5d8fa7dd-d115-4379-9e26-0ce69025586f",
+  "consultantId" : "user-001",
+  "customerId" : "999",
+  "sourceAmount" : {
+    "amount" : "1.00",
+    "currency" : "CHF"
+  },
+  "targetAmount" : {
+    "amount" : "9.04",
+    "currency" : "EUR"
+  },
+  "exchangeRate" : 9.04,
+  "exchangeRateVersionId" : "50ce7a96-9eb8-4ffa-9445-7cce5ae0b8e8",
+  "executionDate" : "2026-02-13T15:27:52.673456",
+  "createdAt" : "2026-02-13T15:27:52.673713",
+  "createdBy" : "admin",
+  "status" : "REVERTED",
+  "revertReason" : "fsdf",
+  "revertedAt" : "2026-02-14T12:49:25.517933",
+  "revertedBy" : "admin"
+} ]
