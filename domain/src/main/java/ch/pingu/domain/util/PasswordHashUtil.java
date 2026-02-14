@@ -4,6 +4,11 @@ import ch.pingu.domain.service.AuthenticationService;
 
 /**
  * Utility to generate password hashes
+ *
+ * usage cli:
+ * cd domain
+ * mvn compile
+ * java -cp target/classes ch.pingu.domain.util.PasswordHashUtil
  */
 public class PasswordHashUtil {
     
