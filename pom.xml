@@ -12,7 +12,6 @@
   </properties>
   <!-- Child Modules listed here -->
   <modules>
-    <module>application</module>
     <module>domain</module>
     <module>presentation</module>
     <module>infrastructure</module>
