@@ -3,23 +3,17 @@
   "username" : "consultant2",
   "passwordHash" : "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=",
   "role" : "CONSULTANT",
-  "createdAt" : "2026-01-20T09:15",
-  "locked" : false,
-  "failedLoginAttempts" : 0
+  "createdAt" : "2026-01-20T09:15"
 }, {
   "id" : "user-002",
   "username" : "consultant1",
   "passwordHash" : "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=",
   "role" : "CONSULTANT",
-  "createdAt" : "2026-01-15T14:30",
-  "locked" : false,
-  "failedLoginAttempts" : 0
+  "createdAt" : "2026-01-15T14:30"
 }, {
   "id" : "user-001",
   "username" : "admin",
   "passwordHash" : "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=",
   "role" : "ADMIN",
-  "createdAt" : "2026-01-01T10:00",
-  "locked" : false,
-  "failedLoginAttempts" : 2
+  "createdAt" : "2026-01-01T10:00"
 } ]
