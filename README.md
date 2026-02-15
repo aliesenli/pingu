@@ -82,7 +82,7 @@ cd <repo-name>
 mvn clean install
 
 # Run the application (from the presentation module)
-mvn javafx:run -pl <artifactId>-presentation
+mvn javafx:run -pl presentation
 ```
 
 ---
@@ -98,70 +98,67 @@ mvn javafx:run -pl <artifactId>-presentation
 
 ## Project Structure
 
-The project uses a **multi-module Maven architecture** with Java modules (JPMS). Each architectural layer is isolated in its own module with its own `pom.xml` and `module-info.java`.
+The project uses a **multi-module Maven architecture**. Each architectural layer is isolated in its own module with its own `pom.xml`.
 
 ```
-<project-root>/
+pingu/
 ├── pom.xml                              # Parent POM (module aggregation & dependency management)
 │
-├── <artifactId>-domain/                 # Domain layer
+├── domain/                              # Domain layer
 │   ├── pom.xml
-│   └── src/main/java/
-│       ├── module-info.java
-│       └── com/<groupId>/domain/
-│           ├── entity/                  # User, Client, Transaction
-│           ├── valueobject/             # Amount, Name, Password, EmailAddress
-│           └── enumeration/             # Role, Currency, TransactionState
+│   └── src/
+│       ├── main/java/ch/pingu/domain/
+│       │   ├── model/                   # User, Transaction, Money, Currency
+│       │   ├── service/                 # AuthenticationService
+│       │   └── util/                    # Utilities
+│       └── test/java/
 │
-├── <artifactId>-infrastructure/         # Infrastructure layer
+├── infrastructure/                      # Infrastructure layer
 │   ├── pom.xml
-│   └── src/main/java/
-│       ├── module-info.java
-│       └── com/<groupId>/infrastructure/
+│   └── src/
+│       ├── main/
+│       │   ├── java/ch/pingu/infrastructure/
+│       │   │   └── repository/          # Data persistence
+│       │   └── resources/data/          # JSON data files
+│       └── test/java/
 │
-├── <artifactId>-application/            # Application layer
+├── presentation/                        # Presentation layer (JavaFX UI)
 │   ├── pom.xml
-│   └── src/main/java/
-│       ├── module-info.java
-│       └── com/<groupId>/application/
-│
-├── <artifactId>-presentation/           # Presentation layer (JavaFX UI)
-│   ├── pom.xml
-│   └── src/main/
-│       ├── java/
-│       │   ├── module-info.java
-│       │   └── com/<groupId>/presentation/
-│       └── resources/
-│           ├── fxml/                    # FXML layout files
-│           ├── css/                     # Stylesheets
-│           └── images/                  # Assets
+│   └── src/
+│       ├── main/java/ch/pingu/
+│       │   ├── AppContext.java
+│       │   └── ui/
+│       │       ├── MainLayout.java
+│       │       ├── components/          # Reusable UI components
+│       │       ├── navigation/          # Navigation logic
+│       │       └── views/               # Application views
+│       └── test/java/
 │
 ├── docs/
-│   └── uml/                             # PlantUML diagrams
+│   ├── uml/                             # PlantUML diagrams
+│   └── *.md                             # Documentation
 └── README.md
 ```
 
 ### Module Dependencies
 
 ```
-presentation ──→ application ←── infrastructure
-                     │
-                   domain
+presentation ──→ infrastructure ──→ domain
 ```
 
-Each module only depends on the layer directly below it, enforced via `module-info.java` and Maven dependencies.
+Each module only depends on the layer directly below it, enforced via Maven dependencies.
 
 ---
 
 ## Architecture
 
-The application follows a **layered architecture**, enforced at build-time through **Maven modules** and at runtime through **Java Platform Module System (JPMS)**.
+The application follows a **layered architecture**, enforced at build-time through **Maven modules**.
 
 | Module | Layer | Responsibility | Depends on |
 |---|---|---|---|
-| `<artifactId>-domain` | **Domain** | Entities, value objects, enums | — |
-| `<artifactId>-infrastructure` | **Infrastructure** | Data persistence and external services | application |
-| `<artifactId>-presentation` | **Presentation** | JavaFX UI (FXML + Controllers) | application |
+| `domain` | **Domain** | Business models, services, and domain logic | — |
+| `infrastructure` | **Infrastructure** | Data persistence and external services | domain |
+| `presentation` | **Presentation** | JavaFX UI components and views | infrastructure |
 
 ---
 
