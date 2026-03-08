@@ -17,11 +17,52 @@
   <name>presentation</name>
 
   <dependencies>
+    <!-- Internal modules -->
+    <dependency>
+      <groupId>ch.pingu</groupId>
+      <artifactId>domain</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.pingu</groupId>
+      <artifactId>infrastructure</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    
+    <!-- JavaFX -->
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>21.0.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-fxml</artifactId>
+      <version>21.0.1</version>
+    </dependency>
+    
+    <!-- Test dependencies -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-maven-plugin</artifactId>
+        <version>0.0.8</version>
+        <configuration>
+          <mainClass>ch.pingu.App</mainClass>
+          <options>
+            <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005</option>
+          </options>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>
