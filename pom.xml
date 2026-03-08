@@ -15,6 +15,7 @@
     <module>domain</module>
     <module>presentation</module>
     <module>infrastructure</module>
+    <module>backend</module>
   </modules>
   <dependencyManagement>
     <dependencies>
