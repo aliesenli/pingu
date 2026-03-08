@@ -36,16 +36,16 @@ public class ExchangeRatesController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get exchange rate version by id")
-    public ResponseEntity<ExchangeRateVersion> get(@PathVariable String id) {
+    public ResponseEntity<ExchangeRateVersion> get(@PathVariable("id") String id) {
         return service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}/convert")
     @Operation(summary = "Convert an amount using a version's rates")
-    public ResponseEntity<BigDecimal> convert(@PathVariable String id,
-                                              @RequestParam String from,
-                                              @RequestParam String to,
-                                              @RequestParam BigDecimal amount) {
+    public ResponseEntity<BigDecimal> convert(@PathVariable("id") String id,
+                                              @RequestParam(name = "from") String from,
+                                              @RequestParam(name = "to") String to,
+                                              @RequestParam(name = "amount") BigDecimal amount) {
         return ResponseEntity.ok(service.convert(id, from, to, amount));
     }
 
@@ -53,5 +53,11 @@ public class ExchangeRatesController {
     @Operation(summary = "Create or update a rate version (in-memory only)")
     public ResponseEntity<ExchangeRateVersion> create(@Valid @RequestBody ExchangeRateVersion version) {
         return ResponseEntity.ok(service.create(version));
+    }
+
+    @PutMapping("/{id}/activate")
+    @Operation(summary = "Activate an exchange rate version (deactivates all others)")
+    public ResponseEntity<ExchangeRateVersion> activate(@PathVariable("id") String id) {
+        return ResponseEntity.ok(service.activate(id));
     }
 }

@@ -1,64 +1,58 @@
 package ch.pingu.backend.rates.service;
 
 import ch.pingu.backend.rates.model.ExchangeRateVersion;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.springframework.core.io.ClassPathResource;
+import ch.pingu.backend.rates.repository.ExchangeRateVersionRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class ExchangeRatesService {
 
-    private static final String DATA_PATH = "data/exchange-rates.json";
+    private final ExchangeRateVersionRepository repository;
 
-    private final ObjectMapper objectMapper;
-    private final Map<String, ExchangeRateVersion> byId = new ConcurrentHashMap<>();
-
-    public ExchangeRatesService() throws IOException {
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
-        loadInitial();
-    }
-
-    private void loadInitial() throws IOException {
-        ClassPathResource res = new ClassPathResource(DATA_PATH);
-        try (InputStream is = res.getInputStream()) {
-            List<ExchangeRateVersion> list = objectMapper.readValue(is, new TypeReference<>(){});
-            list.forEach(v -> byId.put(v.getId(), v));
-        }
+    public ExchangeRatesService(ExchangeRateVersionRepository repository) {
+        this.repository = repository;
     }
 
     public List<ExchangeRateVersion> listAll() {
-        return byId.values().stream()
-                .sorted(Comparator.comparing(ExchangeRateVersion::isActive).reversed()
-                        .thenComparing(ExchangeRateVersion::getUploadedAt, Comparator.nullsLast(Comparator.reverseOrder())))
-                .toList();
+        return repository.findAll(Sort.by(
+                Sort.Order.desc("active"),
+                Sort.Order.desc("uploadedAt")
+        ));
     }
 
     public Optional<ExchangeRateVersion> findById(String id) {
-        return Optional.ofNullable(byId.get(id));
+        return repository.findById(id);
     }
 
     public Optional<ExchangeRateVersion> findActive() {
-        return byId.values().stream().filter(ExchangeRateVersion::isActive).findFirst();
+        return repository.findByActiveTrue();
     }
 
+    @Transactional
     public ExchangeRateVersion create(ExchangeRateVersion version) {
-        Objects.requireNonNull(version.getId(), "id is required");
-        byId.put(version.getId(), version);
         if (version.isActive()) {
-            byId.values().forEach(v -> { if (!Objects.equals(v.getId(), version.getId())) v.setActive(false); });
+            repository.deactivateAll();
         }
-        return version;
+        return repository.save(version);
+    }
+
+    @Transactional
+    public ExchangeRateVersion activate(String id) {
+        ExchangeRateVersion version = repository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Version not found: " + id));
+        repository.deactivateAll();
+        version.setActive(true);
+        return repository.save(version);
     }
 
     public BigDecimal convert(String versionId, String from, String to, BigDecimal amount) {

@@ -2,16 +2,26 @@ package ch.pingu.backend.rates.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@Entity
+@Table(name = "exchange_rate_versions")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ExchangeRateVersion {
+
+    @Id
     private String id;
     private String versionName;
     private String baseCurrency;
+
+    @ElementCollection
+    @CollectionTable(name = "exchange_rates", joinColumns = @JoinColumn(name = "version_id"))
+    @MapKeyColumn(name = "currency")
+    @Column(name = "rate")
     private Map<String, BigDecimal> rates;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm[[:ss][.SSSSSS]]")
