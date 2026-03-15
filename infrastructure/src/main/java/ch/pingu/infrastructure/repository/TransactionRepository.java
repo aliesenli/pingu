@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -32,9 +31,7 @@ public class TransactionRepository {
 
     public Optional<Transaction> findById(String id, String token) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/api/transactions/" + id))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(baseUrl + "/api/transactions/" + id, token)
                     .GET()
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -59,9 +56,7 @@ public class TransactionRepository {
     public Transaction save(Transaction transaction, String token) {
         try {
             String body = objectMapper.writeValueAsString(mapToDTO(transaction));
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/api/transactions"))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(baseUrl + "/api/transactions", token)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
@@ -78,9 +73,7 @@ public class TransactionRepository {
     public Transaction revert(String id, String reason, String token) {
         try {
             String body = objectMapper.writeValueAsString(Map.of("reason", reason));
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/api/transactions/" + id + "/revert"))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(baseUrl + "/api/transactions/" + id + "/revert", token)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
@@ -96,9 +89,7 @@ public class TransactionRepository {
 
     private List<Transaction> fetchList(String url, String token) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(url, token)
                     .GET()
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());

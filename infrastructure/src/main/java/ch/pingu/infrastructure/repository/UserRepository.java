@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -37,9 +36,7 @@ public class UserRepository {
 
     public Optional<User> findById(String id, String token) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/api/users/" + id))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(baseUrl + "/api/users/" + id, token)
                     .GET()
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -55,9 +52,7 @@ public class UserRepository {
 
     public List<User> findAll(String token) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/api/users"))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(baseUrl + "/api/users", token)
                     .GET()
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
