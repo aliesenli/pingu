@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -34,9 +33,7 @@ public class ExchangeRateRepository {
 
     public Optional<ExchangeRateVersion> findById(String id, String token) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/api/rates/" + id))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(baseUrl + "/api/rates/" + id, token)
                     .GET()
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -52,9 +49,7 @@ public class ExchangeRateRepository {
 
     public Optional<ExchangeRateVersion> findActiveVersion(String token) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/api/rates/active"))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(baseUrl + "/api/rates/active", token)
                     .GET()
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -70,9 +65,7 @@ public class ExchangeRateRepository {
 
     public List<ExchangeRateVersion> findAll(String token) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/api/rates"))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(baseUrl + "/api/rates", token)
                     .GET()
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -89,9 +82,7 @@ public class ExchangeRateRepository {
     public ExchangeRateVersion save(ExchangeRateVersion version, String token) {
         try {
             String body = objectMapper.writeValueAsString(mapToDTO(version));
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/api/rates"))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(baseUrl + "/api/rates", token)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
@@ -107,9 +98,7 @@ public class ExchangeRateRepository {
 
     public ExchangeRateVersion setActiveVersion(String versionId, String token) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/api/rates/" + versionId + "/activate"))
-                    .header("Authorization", "Bearer " + token)
+            HttpRequest request = HttpClientHelper.requestBuilder(baseUrl + "/api/rates/" + versionId + "/activate", token)
                     .header("Content-Type", "application/json")
                     .PUT(HttpRequest.BodyPublishers.ofString(""))
                     .build();
