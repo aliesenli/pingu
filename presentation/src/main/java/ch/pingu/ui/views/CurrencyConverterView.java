@@ -121,20 +121,20 @@ public class CurrencyConverterView extends BaseView {
             }
             
             AppContext context = AppContext.getInstance();
-            Optional<ExchangeRateVersion> rateVersionOpt = context.getExchangeRateRepository().findActiveVersion();
-            
+            Optional<ExchangeRateVersion> rateVersionOpt = context.getExchangeRateRepository().findActiveVersion(context.getJwtToken());
+
             if (rateVersionOpt.isEmpty()) {
                 showError("No active exchange rate version found");
                 return;
             }
-            
+
             ExchangeRateVersion rateVersion = rateVersionOpt.get();
             CurrencyConversionService conversionService = context.getCurrencyConversionService();
-            
+
             Money sourceMoney = new Money(amount, source);
             Money targetMoney = conversionService.convert(sourceMoney, target, rateVersion);
             double exchangeRate = conversionService.getExchangeRateAsDouble(source, target, rateVersion);
-            
+
             exchangeRateLabel.setText(String.format("Exchange Rate: 1 %s = %.6f %s", 
                 source.getCode(), exchangeRate, target.getCode()));
             resultLabel.setText(String.format("Result: %s %.2f = %s %.2f", 
@@ -174,8 +174,8 @@ public class CurrencyConverterView extends BaseView {
                 return;
             }
             
-            Optional<ExchangeRateVersion> rateVersionOpt = context.getExchangeRateRepository().findActiveVersion();
-            
+            Optional<ExchangeRateVersion> rateVersionOpt = context.getExchangeRateRepository().findActiveVersion(context.getJwtToken());
+
             if (rateVersionOpt.isEmpty()) {
                 showError("No active exchange rate version found");
                 return;
@@ -201,7 +201,7 @@ public class CurrencyConverterView extends BaseView {
             
             transaction.updateStatus(status);
             
-            context.getTransactionRepository().save(transaction);
+            context.getTransactionRepository().save(transaction, context.getJwtToken());
             
             showSuccess("Transaction saved successfully!");
             handleClear();

@@ -4,127 +4,165 @@ import ch.pingu.domain.model.Currency;
 import ch.pingu.domain.model.ExchangeRateVersion;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.math.BigDecimal;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-/**
- * JSON-based repository for ExchangeRateVersion entities
- */
 public class ExchangeRateRepository {
-    
+
+    private final String baseUrl;
+    private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final String filePath;
-    private List<ExchangeRateVersion> versions;
-    
-    public ExchangeRateRepository(String filePath) {
-        this.filePath = filePath;
+
+    public ExchangeRateRepository(String baseUrl) {
+        this.baseUrl = baseUrl;
+        this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
-        this.versions = new ArrayList<>();
-        loadVersions();
+        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
-    
-    private void loadVersions() {
-        File file = new File(filePath);
-        if (file.exists()) {
-            try {
-                List<ExchangeRateVersionDTO> dtos = objectMapper.readValue(file, new TypeReference<List<ExchangeRateVersionDTO>>() {});
-                versions = dtos.stream()
-                    .map(ExchangeRateVersionDTO::toDomain)
-                    .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
-            } catch (IOException e) {
-                System.err.println("Error loading exchange rates: " + e.getMessage());
-                versions = new ArrayList<>();
-            }
-        }
-    }
-    
-    private void saveVersions() {
+
+    public Optional<ExchangeRateVersion> findById(String id, String token) {
         try {
-            List<ExchangeRateVersionDTO> dtos = versions.stream()
-                .map(ExchangeRateVersionDTO::fromDomain)
-                .toList();
-            objectMapper.writerWithDefaultPrettyPrinter()
-                .writeValue(new File(filePath), dtos);
-        } catch (IOException e) {
-            throw new RuntimeException("Error saving exchange rates", e);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/rates/" + id))
+                    .header("Authorization", "Bearer " + token)
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 404) return Optional.empty();
+            if (response.statusCode() != 200) throw new RuntimeException("HTTP " + response.statusCode());
+            return Optional.of(mapToDomain(objectMapper.readValue(response.body(), ExchangeRateVersionDTO.class)));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching rate version " + id, e);
         }
     }
-    
-    public Optional<ExchangeRateVersion> findById(String id) {
-        return versions.stream()
-            .filter(v -> v.getId().equals(id))
-            .findFirst();
+
+    public Optional<ExchangeRateVersion> findActiveVersion(String token) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/rates/active"))
+                    .header("Authorization", "Bearer " + token)
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 404) return Optional.empty();
+            if (response.statusCode() != 200) throw new RuntimeException("HTTP " + response.statusCode());
+            return Optional.of(mapToDomain(objectMapper.readValue(response.body(), ExchangeRateVersionDTO.class)));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching active rate version", e);
+        }
     }
-    
-    public Optional<ExchangeRateVersion> findActiveVersion() {
-        return versions.stream()
-            .filter(ExchangeRateVersion::isActive)
-            .findFirst();
+
+    public List<ExchangeRateVersion> findAll(String token) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/rates"))
+                    .header("Authorization", "Bearer " + token)
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) throw new RuntimeException("HTTP " + response.statusCode());
+            List<ExchangeRateVersionDTO> dtos = objectMapper.readValue(response.body(), new TypeReference<>() {});
+            return dtos.stream().map(this::mapToDomain).toList();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching rate versions", e);
+        }
     }
-    
-    public List<ExchangeRateVersion> findAll() {
-        return new ArrayList<>(versions);
+
+    public ExchangeRateVersion save(ExchangeRateVersion version, String token) {
+        try {
+            String body = objectMapper.writeValueAsString(mapToDTO(version));
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/rates"))
+                    .header("Authorization", "Bearer " + token)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() / 100 != 2) throw new RuntimeException("HTTP " + response.statusCode());
+            return mapToDomain(objectMapper.readValue(response.body(), ExchangeRateVersionDTO.class));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error saving rate version", e);
+        }
     }
-    
-    public void save(ExchangeRateVersion version) {
-        versions.removeIf(v -> v.getId().equals(version.getId()));
-        versions.add(version);
-        saveVersions();
+
+    public ExchangeRateVersion setActiveVersion(String versionId, String token) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/rates/" + versionId + "/activate"))
+                    .header("Authorization", "Bearer " + token)
+                    .header("Content-Type", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(""))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) throw new RuntimeException("HTTP " + response.statusCode());
+            return mapToDomain(objectMapper.readValue(response.body(), ExchangeRateVersionDTO.class));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error activating rate version " + versionId, e);
+        }
     }
-    
-    public void setActiveVersion(String versionId) {
-        versions.forEach(v -> v.setActive(false));
-        versions.stream()
-            .filter(v -> v.getId().equals(versionId))
-            .findFirst()
-            .ifPresent(v -> v.setActive(true));
-        saveVersions();
+
+    private ExchangeRateVersion mapToDomain(ExchangeRateVersionDTO dto) {
+        Map<Currency, Double> currencyRates = new HashMap<>();
+        if (dto.rates != null) {
+            dto.rates.forEach((code, rate) ->
+                    currencyRates.put(Currency.fromCode(code), rate.doubleValue()));
+        }
+        return new ExchangeRateVersion(
+                dto.id,
+                dto.versionName,
+                Currency.fromCode(dto.baseCurrency),
+                currencyRates,
+                dto.uploadedAt,
+                dto.uploadedBy,
+                dto.active
+        );
     }
-    
-    // DTO for JSON serialization
-    private static class ExchangeRateVersionDTO {
+
+    private ExchangeRateVersionDTO mapToDTO(ExchangeRateVersion version) {
+        ExchangeRateVersionDTO dto = new ExchangeRateVersionDTO();
+        dto.id = version.getId();
+        dto.versionName = version.getVersionName();
+        dto.baseCurrency = version.getBaseCurrency().getCode();
+        dto.rates = new HashMap<>();
+        version.getRates().forEach((currency, rate) ->
+                dto.rates.put(currency.getCode(), BigDecimal.valueOf(rate)));
+        dto.uploadedAt = version.getUploadedAt();
+        dto.uploadedBy = version.getUploadedBy();
+        dto.active = version.isActive();
+        return dto;
+    }
+
+    // DTO needs no-arg constructor for Jackson deserialization
+    static class ExchangeRateVersionDTO {
+        public ExchangeRateVersionDTO() {}
         public String id;
         public String versionName;
         public String baseCurrency;
-        public Map<String, Double> rates;
-        public String uploadedAt;
+        public Map<String, BigDecimal> rates;
+        public LocalDateTime uploadedAt;
         public String uploadedBy;
         public boolean active;
-        
-        public static ExchangeRateVersionDTO fromDomain(ExchangeRateVersion version) {
-            ExchangeRateVersionDTO dto = new ExchangeRateVersionDTO();
-            dto.id = version.getId();
-            dto.versionName = version.getVersionName();
-            dto.baseCurrency = version.getBaseCurrency().getCode();
-            dto.rates = new HashMap<>();
-            version.getRates().forEach((currency, rate) -> 
-                dto.rates.put(currency.getCode(), rate)
-            );
-            dto.uploadedAt = version.getUploadedAt().toString();
-            dto.uploadedBy = version.getUploadedBy();
-            dto.active = version.isActive();
-            return dto;
-        }
-        
-        public ExchangeRateVersion toDomain() {
-            Map<Currency, Double> currencyRates = new HashMap<>();
-            rates.forEach((code, rate) -> 
-                currencyRates.put(Currency.fromCode(code), rate)
-            );
-            
-            return new ExchangeRateVersion(
-                id,
-                versionName,
-                Currency.fromCode(baseCurrency),
-                currencyRates,
-                java.time.LocalDateTime.parse(uploadedAt),
-                uploadedBy,
-                active
-            );
-        }
     }
 }
