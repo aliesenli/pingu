@@ -2,7 +2,6 @@ package ch.pingu.ui.views;
 
 import ch.pingu.AppContext;
 import ch.pingu.domain.model.User;
-import ch.pingu.domain.service.AuthenticationService;
 import ch.pingu.ui.components.buttons.PrimaryButton;
 import ch.pingu.ui.components.inputs.StyledPasswordField;
 import ch.pingu.ui.components.inputs.StyledTextField;
@@ -13,6 +12,12 @@ import javafx.scene.control.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -73,32 +78,68 @@ public class LoginView extends BaseView {
     private void handleLogin() {
         String username = usernameField.getText().trim();
         String password = passwordField.getText();
-        
+
         if (username.isEmpty() || password.isEmpty()) {
             showMessage("Please enter both username and password", false);
             return;
         }
-        
-        AppContext context = AppContext.getInstance();
-        Optional<User> userOpt = context.getUserRepository().findByUsername(username);
-        
-        if (userOpt.isEmpty()) {
-            showMessage("User not found", false);
-            return;
-        }
-        
-        User user = userOpt.get();
-        AuthenticationService.AuthenticationResult result = 
-            context.getAuthenticationService().authenticate(user, password);
-        
-        if (result.isSuccess()) {
-            context.setCurrentUser(user);
-            if (onLoginSuccess != null) {
-                onLoginSuccess.accept(user);
+
+        new Thread(() -> {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                String loginBody = mapper.writeValueAsString(
+                        java.util.Map.of("username", username, "password", password));
+
+                String baseUrl = AppContext.getInstance().getBaseUrl();
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest tokenRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(baseUrl + "/auth/token"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(loginBody))
+                        .build();
+                HttpResponse<String> tokenResponse = client.send(tokenRequest, HttpResponse.BodyHandlers.ofString());
+
+                if (tokenResponse.statusCode() == 401 || tokenResponse.statusCode() == 403) {
+                    javafx.application.Platform.runLater(() -> showMessage("Invalid username or password", false));
+                    return;
+                }
+                if (tokenResponse.statusCode() != 200) {
+                    javafx.application.Platform.runLater(() -> showMessage("Login failed (HTTP " + tokenResponse.statusCode() + ")", false));
+                    return;
+                }
+
+                JsonNode tokenJson = mapper.readTree(tokenResponse.body());
+                JsonNode tokenNode = tokenJson.get("token");
+                JsonNode userIdNode = tokenJson.get("userId");
+                if (tokenNode == null || userIdNode == null) {
+                    javafx.application.Platform.runLater(() -> showMessage("Unexpected response from server", false));
+                    return;
+                }
+                String token = tokenNode.asText();
+                String userId = userIdNode.asText();
+
+                AppContext context = AppContext.getInstance();
+                context.setJwtToken(token);
+
+                Optional<User> userOpt = context.getUserRepository().findById(userId, token);
+                if (userOpt.isEmpty()) {
+                    javafx.application.Platform.runLater(() -> showMessage("Could not load user profile", false));
+                    return;
+                }
+
+                User user = userOpt.get();
+                context.setCurrentUser(user);
+
+                javafx.application.Platform.runLater(() -> {
+                    if (onLoginSuccess != null) {
+                        onLoginSuccess.accept(user);
+                    }
+                });
+
+            } catch (Exception e) {
+                javafx.application.Platform.runLater(() -> showMessage("Login error: " + e.getMessage(), false));
             }
-        } else {
-            showMessage(result.getMessage(), false);
-        }
+        }).start();
     }
     
     private void showMessage(String message, boolean success) {

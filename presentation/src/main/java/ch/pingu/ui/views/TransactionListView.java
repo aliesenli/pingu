@@ -184,11 +184,11 @@ public class TransactionListView extends BaseView {
         List<Transaction> transactions;
         
         if (currentUser.isAdmin()) {
-            transactions = context.getTransactionRepository().findAll();
+            transactions = context.getTransactionRepository().findAll(context.getJwtToken());
         } else {
-            transactions = context.getTransactionRepository().findByConsultantId(currentUser.getId());
+            transactions = context.getTransactionRepository().findByConsultantId(currentUser.getId(), context.getJwtToken());
         }
-        
+
         transactionData.clear();
         transactions.forEach(t -> transactionData.add(new TransactionRow(t)));
     }
@@ -201,9 +201,9 @@ public class TransactionListView extends BaseView {
         
         List<Transaction> transactions;
         if (currentUser.isAdmin()) {
-            transactions = context.getTransactionRepository().findAll();
+            transactions = context.getTransactionRepository().findAll(context.getJwtToken());
         } else {
-            transactions = context.getTransactionRepository().findByConsultantId(currentUser.getId());
+            transactions = context.getTransactionRepository().findByConsultantId(currentUser.getId(), context.getJwtToken());
         }
         
         TransactionService transactionService = context.getTransactionService();
@@ -244,9 +244,9 @@ public class TransactionListView extends BaseView {
             return;
         }
         
-        Optional<Transaction> transactionOpt = AppContext.getInstance()
-            .getTransactionRepository()
-            .findById(selected.getId());
+        AppContext context = AppContext.getInstance();
+        Optional<Transaction> transactionOpt = context.getTransactionRepository()
+            .findById(selected.getId(), context.getJwtToken());
         
         if (transactionOpt.isEmpty()) {
             showError("Transaction not found");
@@ -301,7 +301,7 @@ public class TransactionListView extends BaseView {
             return;
         }
         
-        Optional<Transaction> transactionOpt = context.getTransactionRepository().findById(selected.getId());
+        Optional<Transaction> transactionOpt = context.getTransactionRepository().findById(selected.getId(), context.getJwtToken());
         
         if (transactionOpt.isEmpty()) {
             showError("Transaction not found");
@@ -327,10 +327,8 @@ public class TransactionListView extends BaseView {
                 showError("Reason is required");
                 return;
             }
-            
             try {
-                context.getTransactionService().revertTransaction(transaction, reason, currentUser);
-                context.getTransactionRepository().save(transaction);
+                context.getTransactionRepository().revert(selected.getId(), reason, context.getJwtToken());
                 loadTransactions();
                 showSuccess("Transaction reverted successfully");
             } catch (Exception e) {

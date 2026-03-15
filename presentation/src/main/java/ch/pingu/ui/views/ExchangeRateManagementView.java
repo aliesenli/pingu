@@ -186,9 +186,9 @@ public class ExchangeRateManagementView extends BaseView {
             
             AppContext context = AppContext.getInstance();
             
-            context.getExchangeRateRepository().save(newVersion);
-            
-            context.getExchangeRateRepository().setActiveVersion(newVersion.getId());
+            context.getExchangeRateRepository().save(newVersion, context.getJwtToken());
+
+            context.getExchangeRateRepository().setActiveVersion(newVersion.getId(), context.getJwtToken());
             
             showSuccess("Exchange rates uploaded and activated successfully!");
             
@@ -253,7 +253,7 @@ public class ExchangeRateManagementView extends BaseView {
         
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         
-        context.getExchangeRateRepository().findAll().forEach(version -> {
+        context.getExchangeRateRepository().findAll(context.getJwtToken()).forEach(version -> {
             String display = String.format("%s%s - %s (Base: %s, %d rates)",
                 version.isActive() ? "★ " : "  ",
                 version.getVersionName(),
@@ -275,7 +275,7 @@ public class ExchangeRateManagementView extends BaseView {
         String versionId = selected.split("\\|")[0];
         
         AppContext context = AppContext.getInstance();
-        context.getExchangeRateRepository().setActiveVersion(versionId);
+        context.getExchangeRateRepository().setActiveVersion(versionId, context.getJwtToken());
         
         showSuccess("Exchange rate version activated successfully!");
         loadVersions();

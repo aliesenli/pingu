@@ -2,6 +2,7 @@ package ch.pingu;
 
 import ch.pingu.domain.model.User;
 import ch.pingu.domain.service.AuthenticationService;
+import io.github.cdimascio.dotenv.Dotenv;
 import ch.pingu.domain.service.CurrencyConversionService;
 import ch.pingu.domain.service.TransactionService;
 import ch.pingu.infrastructure.repository.ExchangeRateRepository;
@@ -23,22 +24,16 @@ public class AppContext {
     private final TransactionService transactionService;
     
     private User currentUser;
-    
+    private String jwtToken;
+
+    private String baseUrl;
+
     private AppContext() {
-        String projectRoot = System.getProperty("user.dir");
-        
-        // Try to determine the correct path based on where we're running from
-        String dataDir;
-        if (projectRoot.endsWith("presentation")) {
-            dataDir = projectRoot + "/../infrastructure/src/main/resources/data";
-        } else {
-            dataDir = projectRoot + "/infrastructure/src/main/resources/data";
-        }
-        
-        this.userRepository = new UserRepository(dataDir + "/users.json");
-        this.exchangeRateRepository = new ExchangeRateRepository(dataDir + "/exchange-rates.json");
-        this.transactionRepository = new TransactionRepository(dataDir + "/transactions.json");
-        
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+        this.baseUrl = dotenv.get("PINGU_API_URL", "");
+        this.userRepository = new UserRepository(baseUrl);
+        this.exchangeRateRepository = new ExchangeRateRepository(baseUrl);
+        this.transactionRepository = new TransactionRepository(baseUrl);
         this.authenticationService = new AuthenticationService();
         this.currencyConversionService = new CurrencyConversionService();
         this.transactionService = new TransactionService();
@@ -51,6 +46,10 @@ public class AppContext {
         return instance;
     }
     
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
     public UserRepository getUserRepository() {
         return userRepository;
     }
@@ -82,12 +81,21 @@ public class AppContext {
     public void setCurrentUser(User user) {
         this.currentUser = user;
     }
-    
+
+    public String getJwtToken() {
+        return jwtToken;
+    }
+
+    public void setJwtToken(String jwtToken) {
+        this.jwtToken = jwtToken;
+    }
+
     public void logout() {
         this.currentUser = null;
+        this.jwtToken = null;
     }
     
     public boolean isLoggedIn() {
-        return currentUser != null;
+        return currentUser != null && jwtToken != null;
     }
 }

@@ -3,88 +3,159 @@ package ch.pingu.infrastructure.repository;
 import ch.pingu.domain.model.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-/**
- * JSON-based repository for Transaction entities
- */
 public class TransactionRepository {
-    
+
+    private final String baseUrl;
+    private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final String filePath;
-    private List<Transaction> transactions;
-    
-    public TransactionRepository(String filePath) {
-        this.filePath = filePath;
+
+    public TransactionRepository(String baseUrl) {
+        this.baseUrl = baseUrl;
+        this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
-        this.transactions = new ArrayList<>();
-        loadTransactions();
+        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
-    
-    private void loadTransactions() {
-        File file = new File(filePath);
-        if (file.exists()) {
-            try {
-                List<TransactionDTO> dtos = objectMapper.readValue(file, new TypeReference<List<TransactionDTO>>() {});
-                transactions = dtos.stream()
-                    .map(TransactionDTO::toDomain)
-                    .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
-            } catch (IOException e) {
-                System.err.println("Error loading transactions: " + e.getMessage());
-                transactions = new ArrayList<>();
-            }
-        }
-    }
-    
-    private void saveTransactions() {
+
+    public Optional<Transaction> findById(String id, String token) {
         try {
-            List<TransactionDTO> dtos = transactions.stream()
-                .map(TransactionDTO::fromDomain)
-                .toList();
-            objectMapper.writerWithDefaultPrettyPrinter()
-                .writeValue(new File(filePath), dtos);
-        } catch (IOException e) {
-            throw new RuntimeException("Error saving transactions", e);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/transactions/" + id))
+                    .header("Authorization", "Bearer " + token)
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 404) return Optional.empty();
+            if (response.statusCode() != 200) throw new RuntimeException("HTTP " + response.statusCode());
+            return Optional.of(mapToDomain(objectMapper.readValue(response.body(), TransactionDTO.class)));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching transaction " + id, e);
         }
     }
-    
-    public Optional<Transaction> findById(String id) {
-        return transactions.stream()
-            .filter(t -> t.getId().equals(id))
-            .findFirst();
+
+    public List<Transaction> findAll(String token) {
+        return fetchList(baseUrl + "/api/transactions", token);
     }
-    
-    public List<Transaction> findAll() {
-        return new ArrayList<>(transactions);
+
+    public List<Transaction> findByConsultantId(String consultantId, String token) {
+        return fetchList(baseUrl + "/api/transactions?consultantId=" + consultantId, token);
     }
-    
-    public List<Transaction> findByConsultantId(String consultantId) {
-        return transactions.stream()
-            .filter(t -> t.getConsultantId().equals(consultantId))
-            .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+
+    public Transaction save(Transaction transaction, String token) {
+        try {
+            String body = objectMapper.writeValueAsString(mapToDTO(transaction));
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/transactions"))
+                    .header("Authorization", "Bearer " + token)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() / 100 != 2) throw new RuntimeException("HTTP " + response.statusCode());
+            return mapToDomain(objectMapper.readValue(response.body(), TransactionDTO.class));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error saving transaction", e);
+        }
     }
-    
-    public void save(Transaction transaction) {
-        transactions.removeIf(t -> t.getId().equals(transaction.getId()));
-        transactions.add(transaction);
-        saveTransactions();
+
+    public Transaction revert(String id, String reason, String token) {
+        try {
+            String body = objectMapper.writeValueAsString(Map.of("reason", reason));
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/transactions/" + id + "/revert"))
+                    .header("Authorization", "Bearer " + token)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) throw new RuntimeException("HTTP " + response.statusCode());
+            return mapToDomain(objectMapper.readValue(response.body(), TransactionDTO.class));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error reverting transaction " + id, e);
+        }
     }
-    
-    public void delete(String id) {
-        transactions.removeIf(t -> t.getId().equals(id));
-        saveTransactions();
+
+    private List<Transaction> fetchList(String url, String token) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + token)
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) throw new RuntimeException("HTTP " + response.statusCode());
+            List<TransactionDTO> dtos = objectMapper.readValue(response.body(), new TypeReference<>() {});
+            return dtos.stream().map(this::mapToDomain).toList();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching transactions", e);
+        }
     }
-    
-    // DTO for JSON serialization
-    private static class TransactionDTO {
+
+    private Transaction mapToDomain(TransactionDTO dto) {
+        Money source = new Money(new BigDecimal(dto.sourceAmount.amount.trim()), Currency.fromCode(dto.sourceAmount.currency));
+        Money target = new Money(new BigDecimal(dto.targetAmount.amount.trim()), Currency.fromCode(dto.targetAmount.currency));
+        return new Transaction(
+                dto.id,
+                dto.consultantId,
+                dto.customerId,
+                source,
+                target,
+                dto.exchangeRate,
+                dto.exchangeRateVersionId,
+                dto.executionDate,
+                dto.createdAt,
+                dto.createdBy,
+                TransactionStatus.valueOf(dto.status)
+        );
+    }
+
+    private TransactionDTO mapToDTO(Transaction t) {
+        TransactionDTO dto = new TransactionDTO();
+        dto.id = t.getId();
+        dto.consultantId = t.getConsultantId();
+        dto.customerId = t.getCustomerId();
+        dto.sourceAmount = new TransactionDTO.MoneyDTO(
+                t.getSourceAmount().getAmount().toPlainString(),
+                t.getSourceAmount().getCurrency().getCode());
+        dto.targetAmount = new TransactionDTO.MoneyDTO(
+                t.getTargetAmount().getAmount().toPlainString(),
+                t.getTargetAmount().getCurrency().getCode());
+        dto.exchangeRate = t.getExchangeRate();
+        dto.exchangeRateVersionId = t.getExchangeRateVersionId();
+        dto.executionDate = t.getExecutionDate();
+        dto.createdAt = t.getCreatedAt();
+        dto.createdBy = t.getCreatedBy();
+        dto.status = t.getStatus().name();
+        dto.revertReason = t.getRevertReason();
+        dto.revertedAt = t.getRevertedAt();
+        dto.revertedBy = t.getRevertedBy();
+        return dto;
+    }
+
+    // DTO matching backend JSON shape — needs no-arg constructor for Jackson
+    static class TransactionDTO {
+        public TransactionDTO() {}
         public String id;
         public String consultantId;
         public String customerId;
@@ -92,71 +163,22 @@ public class TransactionRepository {
         public MoneyDTO targetAmount;
         public double exchangeRate;
         public String exchangeRateVersionId;
-        public String executionDate;
-        public String createdAt;
+        public LocalDateTime executionDate;
+        public LocalDateTime createdAt;
         public String createdBy;
         public String status;
         public String revertReason;
-        public String revertedAt;
+        public LocalDateTime revertedAt;
         public String revertedBy;
-        
-        public static TransactionDTO fromDomain(Transaction transaction) {
-            TransactionDTO dto = new TransactionDTO();
-            dto.id = transaction.getId();
-            dto.consultantId = transaction.getConsultantId();
-            dto.customerId = transaction.getCustomerId();
-            dto.sourceAmount = MoneyDTO.fromDomain(transaction.getSourceAmount());
-            dto.targetAmount = MoneyDTO.fromDomain(transaction.getTargetAmount());
-            dto.exchangeRate = transaction.getExchangeRate();
-            dto.exchangeRateVersionId = transaction.getExchangeRateVersionId();
-            dto.executionDate = transaction.getExecutionDate().toString();
-            dto.createdAt = transaction.getCreatedAt().toString();
-            dto.createdBy = transaction.getCreatedBy();
-            dto.status = transaction.getStatus().name();
-            dto.revertReason = transaction.getRevertReason();
-            dto.revertedAt = transaction.getRevertedAt() != null ? transaction.getRevertedAt().toString() : null;
-            dto.revertedBy = transaction.getRevertedBy();
-            return dto;
-        }
-        
-        public Transaction toDomain() {
-            Transaction transaction = new Transaction(
-                id,
-                consultantId,
-                customerId,
-                sourceAmount.toDomain(),
-                targetAmount.toDomain(),
-                exchangeRate,
-                exchangeRateVersionId,
-                java.time.LocalDateTime.parse(executionDate),
-                java.time.LocalDateTime.parse(createdAt),
-                createdBy,
-                TransactionStatus.valueOf(status)
-            );
-            
-            // Restore revert information if exists
-            if (revertReason != null && !revertReason.isEmpty()) {
-                // Note: This is a workaround since revert fields are private
-                // In production, consider adding a constructor or builder pattern
+
+        static class MoneyDTO {
+            public MoneyDTO() {}
+            public MoneyDTO(String amount, String currency) {
+                this.amount = amount;
+                this.currency = currency;
             }
-            
-            return transaction;
-        }
-    }
-    
-    private static class MoneyDTO {
-        public String amount;
-        public String currency;
-        
-        public static MoneyDTO fromDomain(Money money) {
-            MoneyDTO dto = new MoneyDTO();
-            dto.amount = money.getAmount().toString();
-            dto.currency = money.getCurrency().getCode();
-            return dto;
-        }
-        
-        public Money toDomain() {
-            return new Money(new BigDecimal(amount), Currency.fromCode(currency));
+            public String amount;
+            public String currency;
         }
     }
 }
